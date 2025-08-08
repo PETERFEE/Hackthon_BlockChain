@@ -224,10 +224,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📞 Contact
 
 For questions or support:
-- Email: support@ipinvest.com
-- Discord: [IPInvest Community](https://discord.gg/ipinvest)
-- Twitter: [@IPInvest](https://twitter.com/ipinvest)
+- Email: fenghon000@gmail.com
 
 ---
+
 
 **Built with ❤️ for the Andromeda ecosystem** 
