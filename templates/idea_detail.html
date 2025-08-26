@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ idea.title }} - IP Invest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <a href="/" class="text-blue-600 hover:text-blue-800 mb-4 inline-block">&larr; Back to Browse</a>
+        
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ idea.title }}</h1>
+            <p class="text-gray-600 mb-6">{{ idea.field }} • By {{ idea.inventor }}</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Content -->
+                <div class="lg:col-span-2">
+                    <h2 class="text-xl font-semibold mb-4">Description</h2>
+                    <p class="text-gray-700 mb-6">{{ idea.description }}</p>
+                    
+                    <!-- Revenue Sharing Details -->
+                    <div class="bg-blue-50 rounded-lg p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-blue-800 mb-4">🎯 Revenue Sharing Model</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-blue-600">70%</div>
+                                <p class="text-sm text-blue-700">Creator Royalties</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-green-600">30%</div>
+                                <p class="text-sm text-green-700">Investor Pool</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-4">
+                            Powered by Andromeda Splitter ADO - automatic blockchain-based revenue distribution
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Investment Panel -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Investment Details</h3>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <span class="text-gray-500">Predicted Value</span>
+                            <p class="text-2xl font-bold text-green-600">${{ "{:,.0f}".format(idea.predicted_value) }}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Token Price</span>
+                            <p class="text-xl font-bold">${{ "{:,.0f}".format(idea.token_price) }}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Progress</span>
+                            {% set progress = (idea.tokens_sold / idea.total_tokens * 100) %}
+                            <p class="text-sm text-gray-600 mb-2">{{ idea.tokens_sold }}/{{ idea.total_tokens }} tokens ({{ "{:.1f}".format(progress) }}%)</p>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-blue-600 h-3 rounded-full" style="width: {{ progress }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="showInvestModal()" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        Invest Now
+                    </button>
+                    
+                    <!-- Splitter Demo Button -->
+                    <button onclick="setupRoyaltySplitter()" class="w-full mt-3 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 font-semibold text-sm">
+                        🤖 Setup Andromeda Revenue Splitter
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Recent Investments -->
+            {% if investments %}
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-4">Recent Investments</h3>
+                <div class="space-y-2">
+                    {% for investment in investments[-5:] %}
+                    <div class="bg-gray-50 rounded p-3 flex justify-between">
+                        <span class="text-sm">{{ investment.investor_address[:8] }}...{{ investment.investor_address[-4:] }}</span>
+                        <span class="text-sm font-semibold">{{ investment.tokens_purchased }} tokens</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Investment Modal -->
+    <div id="investModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-xl font-bold mb-4">Invest in {{ idea.title }}</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Number of Tokens</label>
+                <input type="number" id="tokenAmount" class="w-full border rounded px-3 py-2" min="1" value="100">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Your Wallet Address</label>
+                <input type="text" id="walletAddress" class="w-full border rounded px-3 py-2" placeholder="andr1...">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeInvestModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded">Cancel</button>
+                <button onclick="confirmInvestment()" class="flex-1 bg-green-600 text-white py-2 rounded">Invest</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showInvestModal() {
+            document.getElementById('investModal').classList.remove('hidden');
+            document.getElementById('investModal').classList.add('flex');
+        }
+
+        function closeInvestModal() {
+            document.getElementById('investModal').classList.add('hidden');
+            document.getElementById('investModal').classList.remove('flex');
+        }
+
+        async function confirmInvestment() {
+            const tokens = document.getElementById('tokenAmount').value;
+            const wallet = document.getElementById('walletAddress').value;
+
+            if (!tokens || !wallet) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/invest/{{ idea.id }}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tokens: parseInt(tokens),
+                        wallet_address: wallet
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Investment successful! 
+                    
+🎉 You purchased ${result.tokens_purchased} tokens
+💰 Total cost: $${result.total_cost.toLocaleString()}
+📊 Your Revenue Share: ${result.revenue_sharing.your_share}
+${result.revenue_sharing.explanation}
+
+Transaction: ${result.transaction_hash}`);
+                    
+                    closeInvestModal();
+                    location.reload();
+                } else {
+                    alert('Investment failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function setupRoyaltySplitter() {
+            const creatorWallet = prompt('Enter creator wallet address:', 'andr1creator...');
+            if (!creatorWallet) return;
+
+            try {
+                const response = await fetch(`/api/setup-royalty-sharing/{{ idea.id }}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        creator_wallet: creatorWallet
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`🚀 Andromeda Splitter ADO Ready!
+
+✅ Revenue Split Configured:
+• Creator: ${result.revenue_split.creator}
+• Investors: ${result.revenue_split.investors}
+• Total Investors: ${result.revenue_split.total_investors}
+
+🤖 ${result.message}
+
+Next: ${result.next_step}`);
+                } else {
+                    alert('Setup failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html> 

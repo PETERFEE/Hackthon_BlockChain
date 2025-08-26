@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Invest - Blockchain IP Investment Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">IP Invest</h1>
+            <p class="text-xl text-gray-600">Invest in Intellectual Property with Blockchain-Powered Revenue Sharing</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-center mb-8">
+            <nav class="bg-white rounded-lg shadow-md px-6 py-3">
+                <div class="flex space-x-6">
+                    <a href="/" class="text-blue-600 font-semibold">Browse Ideas</a>
+                    <a href="/submit_idea" class="text-gray-600 hover:text-blue-600">Submit IP</a>
+                    <a href="/marketplace" class="text-gray-600 hover:text-blue-600">Marketplace</a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- IP Ideas Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for idea in ideas %}
+            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <!-- Idea Header -->
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ idea.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ idea.field }}</p>
+                    <p class="text-gray-700">{{ idea.description[:100] }}...</p>
+                </div>
+
+                <!-- Investment Info -->
+                <div class="border-t pt-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">Predicted Value</span>
+                            <p class="font-bold text-green-600">${{ "{:,.0f}".format(idea.predicted_value) }}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Token Price</span>
+                            <p class="font-bold">${{ "{:,.0f}".format(idea.token_price) }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mt-3">
+                        {% set progress = (idea.tokens_sold / idea.total_tokens * 100) %}
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>{{ idea.tokens_sold }}/{{ idea.total_tokens }} tokens sold</span>
+                            <span>{{ "{:.1f}".format(progress) }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ progress }}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue Sharing Info -->
+                <div class="bg-blue-50 rounded-lg p-3 mb-4">
+                    <h4 class="font-semibold text-blue-800 text-sm mb-2">🎯 Revenue Sharing</h4>
+                    <div class="text-xs text-blue-700">
+                        <p>• Creator gets 70% of royalties</p>
+                        <p>• Investors split 30% proportionally</p>
+                        <p>• Powered by Andromeda Splitter ADO</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2">
+                    <a href="/idea/{{ idea.id }}" 
+                       class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-center hover:bg-blue-700 transition-colors">
+                        View Details
+                    </a>
+                    <button onclick="quickInvest({{ idea.id }})" 
+                            class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                        Quick Invest
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- No Ideas Message -->
+        {% if not ideas %}
+        <div class="text-center py-12">
+            <h3 class="text-xl text-gray-600 mb-4">No IP ideas available yet</h3>
+            <a href="/submit_idea" class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">
+                Submit the First Idea
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Invest Modal -->
+    <div id="investModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-96 max-w-90vw">
+            <h3 class="text-xl font-bold mb-4">Quick Investment</h3>
+            <div id="investContent">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Number of Tokens</label>
+                    <input type="number" id="tokenAmount" class="w-full border rounded px-3 py-2" min="1" value="100">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Your Wallet Address</label>
+                    <input type="text" id="walletAddress" class="w-full border rounded px-3 py-2" placeholder="andr1...">
+                </div>
+                <div id="investmentPreview" class="bg-gray-50 rounded p-3 mb-4 hidden">
+                    <h4 class="font-semibold mb-2">Investment Preview</h4>
+                    <div class="text-sm">
+                        <p>Total Cost: <span id="totalCost"></span></p>
+                        <p>Your Revenue Share: <span id="revenueShare"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeInvestModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded">Cancel</button>
+                <button onclick="confirmInvestment()" class="flex-1 bg-green-600 text-white py-2 rounded">Invest Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentIdeaId = null;
+
+        function quickInvest(ideaId) {
+            currentIdeaId = ideaId;
+            document.getElementById('investModal').classList.remove('hidden');
+            document.getElementById('investModal').classList.add('flex');
+        }
+
+        function closeInvestModal() {
+            document.getElementById('investModal').classList.add('hidden');
+            document.getElementById('investModal').classList.remove('flex');
+        }
+
+        async function confirmInvestment() {
+            const tokens = document.getElementById('tokenAmount').value;
+            const wallet = document.getElementById('walletAddress').value;
+
+            if (!tokens || !wallet) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/invest/${currentIdeaId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tokens: parseInt(tokens),
+                        wallet_address: wallet
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Investment successful! 
+                    
+🎉 You purchased ${result.tokens_purchased} tokens
+💰 Total cost: $${result.total_cost.toLocaleString()}
+📊 Revenue Sharing:
+• Creator gets: ${result.revenue_sharing.creator_gets}
+• Your share: ${result.revenue_sharing.your_share}
+• ${result.revenue_sharing.explanation}
+
+Transaction: ${result.transaction_hash}`);
+                    
+                    closeInvestModal();
+                    location.reload(); // Refresh to show updated progress
+                } else {
+                    alert('Investment failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Update investment preview when tokens change
+        document.getElementById('tokenAmount').addEventListener('input', function() {
+            // This would calculate preview - simplified for demo
+            const tokens = parseInt(this.value) || 0;
+            // You could fetch token price and calculate here
+        });
+    </script>
+</body>
+</html> 

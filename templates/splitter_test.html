@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andromeda Splitter ADO Test - IP Invest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">🤖 Andromeda Splitter ADO Demo</h1>
+            <p class="text-lg text-gray-600">Test the actual blockchain revenue distribution system</p>
+            <a href="/" class="text-blue-600 hover:text-blue-800 mt-2 inline-block">&larr; Back to IP Invest</a>
+        </div>
+
+        <!-- Demo Steps -->
+        <div class="max-w-4xl mx-auto">
+            <!-- Step 1: Configuration -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Step 1: Configure Revenue Split</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Creator Address (70%)</label>
+                        <input type="text" id="creatorAddr" class="w-full border rounded px-3 py-2" 
+                               value="andr1tjw6yhv5ln0tlgph3g352dvrssn898qzncv6kz">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Investor Address (30%)</label>
+                        <input type="text" id="investorAddr" class="w-full border rounded px-3 py-2" 
+                               value="andr1ddja765fy64v432dydm0ggfaqejgtzlfyr9l8c">
+                    </div>
+                </div>
+                <button onclick="generateSplitterContract()" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Generate Splitter Contract
+                </button>
+            </div>
+
+            <!-- Step 2: Contract Details -->
+            <div id="contractDetails" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Step 2: Splitter Contract Ready</h2>
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h3 class="font-semibold mb-2">Contract Configuration:</h3>
+                    <pre id="contractConfig" class="text-sm text-gray-700 overflow-x-auto"></pre>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="deployContract()" 
+                            class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                        🚀 Deploy on Andromeda Mainnet
+                    </button>
+                    <button onclick="simulateRevenue()" 
+                            class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                        💰 Simulate Revenue Distribution
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Transaction Results -->
+            <div id="transactionResults" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Step 3: Blockchain Transaction</h2>
+                <div id="txDetails" class="space-y-4"></div>
+            </div>
+
+            <!-- Step 4: Revenue Distribution -->
+            <div id="revenueResults" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Step 4: Revenue Distribution Test</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-800 mb-2">Creator (70%)</h3>
+                        <div id="creatorResults"></div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-green-800 mb-2">Investor (30%)</h3>
+                        <div id="investorResults"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="bg-gray-800 text-white rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">🔧 Technical Implementation</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div>
+                        <h3 class="font-semibold mb-2">Andromeda Protocol</h3>
+                        <ul class="space-y-1 text-gray-300">
+                            <li>• Chain: andromeda-1 (mainnet)</li>
+                            <li>• Splitter ADO Code ID: 1215</li>
+                            <li>• Kernel: andr14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4anegh</li>
+                            <li>• Native Token: ANDR</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2">Revenue Split Logic</h3>
+                        <ul class="space-y-1 text-gray-300">
+                            <li>• Creator: 70% of all royalties</li>
+                            <li>• Investors: 30% split proportionally</li>
+                            <li>• Automatic distribution via smart contract</li>
+                            <li>• No manual intervention required</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let splitterConfig = null;
+
+        function generateSplitterContract() {
+            const creatorAddr = document.getElementById('creatorAddr').value;
+            const investorAddr = document.getElementById('investorAddr').value;
+
+            if (!creatorAddr || !investorAddr) {
+                alert('Please enter both addresses');
+                return;
+            }
+
+            // Generate the actual Splitter ADO configuration
+            splitterConfig = {
+                "recipients": [
+                    {
+                        "recipient": {"address": creatorAddr},
+                        "percent": "0.7"
+                    },
+                    {
+                        "recipient": {"address": investorAddr},
+                        "percent": "0.3"
+                    }
+                ],
+                "lock_time": null,
+                "default_recipient": null,
+                "kernel_address": "andr14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4anegh",
+                "owner": creatorAddr
+            };
+
+            // Show contract details
+            document.getElementById('contractConfig').textContent = JSON.stringify(splitterConfig, null, 2);
+            document.getElementById('contractDetails').classList.remove('hidden');
+
+            // Scroll to contract details
+            document.getElementById('contractDetails').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function deployContract() {
+            // Show deployment simulation
+            const txDetails = document.getElementById('txDetails');
+            txDetails.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-800 mb-2">✅ Contract Deployment Simulation</h3>
+                    <div class="text-sm text-green-700 space-y-1">
+                        <p><strong>Transaction Type:</strong> MsgInstantiateContract</p>
+                        <p><strong>Code ID:</strong> 1215 (Splitter ADO)</p>
+                        <p><strong>Contract Address:</strong> andr1contract123456789abcdef (simulated)</p>
+                        <p><strong>Gas Used:</strong> ~200,000 uandr</p>
+                        <p><strong>Status:</strong> Success ✅</p>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">📋 Transaction Body (for Keplr)</h3>
+                    <pre class="text-xs text-blue-700 overflow-x-auto">{
+  "typeUrl": "/cosmwasm.wasm.v1.MsgInstantiateContract",
+  "value": {
+    "sender": "${document.getElementById('creatorAddr').value}",
+    "admin": "${document.getElementById('creatorAddr').value}",
+    "codeId": "1215",
+    "label": "IP-Revenue-Splitter",
+    "msg": ${JSON.stringify(JSON.stringify(splitterConfig))},
+    "funds": []
+  }
+}</pre>
+                </div>
+            `;
+
+            document.getElementById('transactionResults').classList.remove('hidden');
+            document.getElementById('transactionResults').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function simulateRevenue() {
+            // Simulate revenue distribution
+            const revenueAmount = 1000; // $1000 in royalties
+            const creatorShare = revenueAmount * 0.7; // 70%
+            const investorShare = revenueAmount * 0.3; // 30%
+
+            document.getElementById('creatorResults').innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <p><strong>Address:</strong> ${document.getElementById('creatorAddr').value.substring(0, 12)}...</p>
+                    <p><strong>Share:</strong> 70%</p>
+                    <p><strong>Amount:</strong> $${creatorShare} ANDR</p>
+                    <p class="text-green-600">✅ Automatically distributed</p>
+                </div>
+            `;
+
+            document.getElementById('investorResults').innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <p><strong>Address:</strong> ${document.getElementById('investorAddr').value.substring(0, 12)}...</p>
+                    <p><strong>Share:</strong> 30%</p>
+                    <p><strong>Amount:</strong> $${investorShare} ANDR</p>
+                    <p class="text-green-600">✅ Automatically distributed</p>
+                </div>
+            `;
+
+            document.getElementById('revenueResults').classList.remove('hidden');
+            document.getElementById('revenueResults').scrollIntoView({ behavior: 'smooth' });
+
+            // Show success message
+            setTimeout(() => {
+                alert(`🎉 Revenue Distribution Complete!
+
+💰 Total Revenue: $${revenueAmount}
+👨‍💼 Creator Received: $${creatorShare} (70%)
+💼 Investor Received: $${investorShare} (30%)
+
+🤖 Distributed automatically by Andromeda Splitter ADO!
+No manual intervention required.`);
+            }, 1000);
+        }
+    </script>
+</body>
+</html> 
